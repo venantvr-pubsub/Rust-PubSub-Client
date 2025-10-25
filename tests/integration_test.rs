@@ -5,14 +5,22 @@ use tokio::sync::Mutex;
 
 #[tokio::test]
 async fn test_client_creation() {
-    let config = ClientConfig::new("http://localhost:5000", "test_consumer", vec!["test_topic".to_string()]);
+    let config = ClientConfig::new(
+        "http://localhost:5000",
+        "test_consumer",
+        vec!["test_topic".to_string()],
+    );
     let client = PubSubClient::new(config);
     assert!(!client.is_running());
 }
 
 #[tokio::test]
 async fn test_handler_registration() {
-    let config = ClientConfig::new("http://localhost:5000", "test_consumer", vec!["test_topic".to_string()]);
+    let config = ClientConfig::new(
+        "http://localhost:5000",
+        "test_consumer",
+        vec!["test_topic".to_string()],
+    );
     let client = PubSubClient::new(config);
 
     let received = Arc::new(Mutex::new(Vec::new()));
@@ -37,9 +45,13 @@ async fn test_idempotence_filter() {
 
 #[tokio::test]
 async fn test_config_builder() {
-    let config = ClientConfig::new("http://localhost:5000", "test_consumer", vec!["topic1".to_string(), "topic2".to_string()])
-        .with_idempotence(true, 500)
-        .with_handler_workers(20);
+    let config = ClientConfig::new(
+        "http://localhost:5000",
+        "test_consumer",
+        vec!["topic1".to_string(), "topic2".to_string()],
+    )
+    .with_idempotence(true, 500)
+    .with_handler_workers(20);
 
     assert_eq!(config.consumer, "test_consumer");
     assert_eq!(config.topics.len(), 2);
@@ -56,7 +68,7 @@ async fn test_message_creation() {
         "test_topic",
         json!({"key": "value"}),
         "test_producer",
-        Some("msg_123".to_string())
+        Some("msg_123".to_string()),
     );
 
     assert_eq!(msg.topic, "test_topic");

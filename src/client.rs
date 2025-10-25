@@ -74,7 +74,10 @@ impl PubSubClient {
             },
         );
 
-        debug!("Registered handler '{}' for topic '{}'", handler_name, topic);
+        debug!(
+            "Registered handler '{}' for topic '{}'",
+            handler_name, topic
+        );
     }
 
     pub async fn start(&self) -> Result<()> {
@@ -120,15 +123,16 @@ impl PubSubClient {
         };
 
         let consumer_disconnect = consumer.clone();
-        let on_disconnect = move |_payload: Payload, _socket: SocketClient| -> BoxFuture<'static, ()> {
-            let consumer = consumer_disconnect.clone();
-            Box::pin(async move {
-                warn!(
+        let on_disconnect =
+            move |_payload: Payload, _socket: SocketClient| -> BoxFuture<'static, ()> {
+                let consumer = consumer_disconnect.clone();
+                Box::pin(async move {
+                    warn!(
                     "[{}] Disconnected from server. Reconnection will be attempted automatically.",
                     consumer
                 );
-            })
-        };
+                })
+            };
 
         let on_message = move |payload: Payload, _socket: SocketClient| -> BoxFuture<'static, ()> {
             let handlers = handlers.clone();
@@ -148,7 +152,7 @@ impl PubSubClient {
                             error!("Empty text payload");
                             return;
                         }
-                    },
+                    }
                     #[allow(deprecated)]
                     Payload::String(s) => match serde_json::from_str(&s) {
                         Ok(v) => v,
@@ -261,7 +265,12 @@ impl PubSubClient {
             .on("connect", on_connect)
             .on("disconnect", on_disconnect)
             .on("message", on_message)
-            .on("new_message", |_payload: Payload, _socket: SocketClient| -> BoxFuture<'static, ()> { Box::pin(async {}) })
+            .on(
+                "new_message",
+                |_payload: Payload, _socket: SocketClient| -> BoxFuture<'static, ()> {
+                    Box::pin(async {})
+                },
+            )
             .reconnect(self.config.reconnection)
             .reconnect_delay(
                 self.config.reconnection_delay.as_millis() as u64,
@@ -269,7 +278,10 @@ impl PubSubClient {
             )
             .max_reconnect_attempts(self.config.reconnection_attempts.min(255) as u8);
 
-        let client = client.connect().await.map_err(|e| Error::SocketIo(e.to_string()))?;
+        let client = client
+            .connect()
+            .await
+            .map_err(|e| Error::SocketIo(e.to_string()))?;
 
         Ok(client)
     }

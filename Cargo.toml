@@ -1,0 +1,38 @@
+[package]
+name = "rust-pubsub-client"
+version = "0.1.0"
+edition = "2021"
+authors = ["venantvr <venantvr@gmail.com>"]
+license = "MIT"
+description = "High-performance WebSocket Pub/Sub client for Rust with Socket.IO support"
+keywords = ["pubsub", "websocket", "socketio", "messaging", "client"]
+categories = ["network-programming", "asynchronous"]
+
+[dependencies]
+tokio = { version = "1.40", features = ["full"] }
+tokio-tungstenite = "0.24"
+rust_socketio = { version = "0.6", features = ["async"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+futures = "0.3"
+thiserror = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+reqwest = { version = "0.12", features = ["json"] }
+uuid = { version = "1.10", features = ["v4", "serde"] }
+dashmap = "6.1"
+parking_lot = "0.12"
+
+[dev-dependencies]
+tokio-test = "0.4"
+criterion = { version = "0.5", features = ["async_tokio"] }
+mockito = "1.5"
+
+[[bench]]
+name = "client_benchmark"
+harness = false
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

@@ -341,18 +341,12 @@ pub async fn start(&self) -> Result<()> {
 
 ### Python Degradation
 
-```
-  Throughput
-      ^
-10K   |████████
-      |████████
- 8K   |████████░░
-      |████████░░░░
- 6K   |████████░░░░░░
-      |████████░░░░░░░░
- 4K   |████████░░░░░░░░░░
-      +-------------------> Load
-      0  5K  10K  15K  20K
+```mermaid
+xychart-beta
+    title "Python Degradation Under Load"
+    x-axis "Load (msg/s)" [0, "5K", "10K", "15K", "20K"]
+    y-axis "Throughput (msg/s)" 0 --> 12000
+    bar [0, 5000, 10000, 8000, 4000]
 ```
 
 - Saturates at ~10K msg/s
@@ -361,18 +355,12 @@ pub async fn start(&self) -> Result<()> {
 
 ### Rust Linear Scaling
 
-```
-  Throughput
-      ^
-100K  |          ████████
-      |      ████████
- 80K  |  ████████
-      |████████
- 60K  |████
-      |██
- 40K  |█
-      +-------------------> Load
-      0  20K 40K 60K 80K 100K
+```mermaid
+xychart-beta
+    title "Rust Linear Scaling Under Load"
+    x-axis "Load (msg/s)" [0, "20K", "40K", "60K", "80K", "100K"]
+    y-axis "Throughput (msg/s)" 0 --> 120000
+    bar [0, 20000, 40000, 60000, 80000, 100000]
 ```
 
 - Linear up to 100K+ msg/s
@@ -499,3 +487,4 @@ The Rust implementation eliminates **7 fundamental Python bottlenecks** that can
 7. ✅ Compiled code → 3-10x faster execution
 
 **Result:** 10-20x throughput, 10x lower latency, 6x less memory.
+

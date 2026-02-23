@@ -4,12 +4,7 @@ Rust implementation of a pub/sub client built on tokio, rust_socketio, and dashm
 
 ## Stack
 
-- Rust
-- Tokio (async runtime)
-- rust_socketio (Socket.IO client)
-- DashMap (concurrent hash map)
-- Criterion (benchmarking)
-
+[![Stack](https://skillicons.dev/icons?i=rust&theme=dark)](https://skillicons.dev)
 ## Structure
 
 - `Cargo.toml` -- Project manifest and dependencies

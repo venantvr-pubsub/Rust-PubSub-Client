@@ -21,10 +21,13 @@ impl ClientConfig {
             .to_lowercase()
             == "true";
 
+        // `rust_socketio` interprète `max_reconnect_attempts(0)` comme « aucune tentative », et non
+        // comme « illimité » : le défaut à 0 désactivait donc silencieusement la reconnexion alors
+        // même que `reconnection` valait `true`. On retient une valeur finie et non nulle.
         let reconnection_attempts = std::env::var("PUBSUB_RECONNECTION_ATTEMPTS")
             .ok()
             .and_then(|s| s.parse().ok())
-            .unwrap_or(0);
+            .unwrap_or(10);
 
         let reconnection_delay = std::env::var("PUBSUB_RECONNECTION_DELAY_MS")
             .ok()

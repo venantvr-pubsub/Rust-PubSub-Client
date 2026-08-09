@@ -100,8 +100,6 @@ impl PubSubClient {
         let topics = self.config.topics.clone();
         let handlers = self.handlers.clone();
         let idempotence_filter = self.idempotence_filter.clone();
-        let http_client = self.http_client.clone();
-        let url = self.config.url.clone();
         let socket_client_arc = self.socket_client.clone();
         let worker_semaphore = self.worker_semaphore.clone();
 
@@ -137,8 +135,6 @@ impl PubSubClient {
         let on_message = move |payload: Payload, _socket: SocketClient| -> BoxFuture<'static, ()> {
             let handlers = handlers.clone();
             let idempotence_filter = idempotence_filter.clone();
-            let http_client = http_client.clone();
-            let url = url.clone();
             let consumer = consumer.clone();
             let socket_client_arc = socket_client_arc.clone();
             let worker_semaphore = worker_semaphore.clone();
@@ -217,9 +213,8 @@ impl PubSubClient {
                     });
 
                     Self::notify_consumption_static(
-                        http_client.clone(),
-                        url.clone(),
                         socket_client_arc.clone(),
+                        &consumer,
                         &handler_name,
                         topic,
                         message_id,
@@ -249,9 +244,8 @@ impl PubSubClient {
                 });
 
                 Self::notify_consumption_static(
-                    http_client,
-                    url,
                     socket_client_arc,
+                    &consumer,
                     &handler_name,
                     topic,
                     message_id,
@@ -286,17 +280,24 @@ impl PubSubClient {
         Ok(client)
     }
 
+    // Signale au serveur qu'un message a été consommé.
+    //
+    // `consumer` doit porter le nom réel du consommateur, et non celui du handler. Le serveur
+    // construit la liste des consommateurs du graphe à partir de `subscriptions` UNION
+    // `consumptions` : envoyer « Handler_orders » y créait un nœud consommateur fantôme, distinct
+    // du « alice » annoncé à l'abonnement, et le dashboard affichait les deux.
+    // Le nom du handler reste transmis à part, à titre indicatif.
     async fn notify_consumption_static(
-        _http_client: HttpClient,
-        _url: String,
         socket_client_arc: Arc<RwLock<Option<SocketClient>>>,
+        consumer: &str,
         handler_name: &str,
         topic: &str,
         message_id: Option<&str>,
         message: &serde_json::Value,
     ) {
         let data = json!({
-            "consumer": handler_name,
+            "consumer": consumer,
+            "handler": handler_name,
             "topic": topic,
             "message_id": message_id,
             "message": message,
@@ -354,7 +355,15 @@ impl PubSubClient {
         info!("Stopping client {}", self.config.consumer);
         *self.running.write() = false;
 
-        if let Some(socket) = self.socket_client.write().take() {
+        // On extrait le socket puis on relâche le verrou AVANT le `.await`.
+        // Écrit sous la forme `if let Some(socket) = self.socket_client.write().take()`, le garde
+        // temporaire vivait jusqu'à la fin du bloc `if let` : un `RwLock` de `parking_lot` est
+        // bloquant, si bien que toute autre tâche lisant `socket_client` — c'est le cas de
+        // `notify_consumption_static` à chaque message consommé — bloquait le thread de l'exécuteur
+        // pendant toute la durée de la déconnexion.
+        let socket = self.socket_client.write().take();
+
+        if let Some(socket) = socket {
             socket
                 .disconnect()
                 .await
